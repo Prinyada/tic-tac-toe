@@ -5,10 +5,18 @@ import { useState } from "react";
 
 function App() {
   const [board, setBoard] = useState(Array);
-  const [size, setSize] = useState(3);
   const [isClick, setIsClick] = useState(false);
   const [xPlaying, setXplaying] = useState(true);
-  let winPatterns;
+
+  // save to database
+  const [size, setSize] = useState(3); 
+  const [win, setWin] = useState(""); 
+  const [lose, setLose] = useState(""); 
+  const [toe, setToe] = useState(false); 
+  const [result, setResult] = useState(""); 
+
+  let allDataHistory = [];
+  let saveWinToDb;
 
   const style = {
     display: "grid",
@@ -117,18 +125,15 @@ function App() {
     
     setBoard(updatedBoard);
     setXplaying(!xPlaying);
+    
     let winX = isWinningState(updatedBoard,"X");
     let winO = isWinningState(updatedBoard,"O");
-    if(winX === true){
-      console.log("winner is X");
-    }
-    else if(winO === true){
-      console.log("winner is O");
-    }
-    else {
-      console.log("Tie");
-    }
+    
+    console.log("this winX -> ",winX);
+    console.log("this winO -> ",winO);
+
   };
+
 
   useEffect(() => {
     createBoard();
