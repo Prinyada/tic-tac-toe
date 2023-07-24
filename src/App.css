@@ -23,6 +23,13 @@ body {
   font-weight: bold;
   text-align: center;
   margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.board-text-winner{
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
 }
 
 .header-board-content {

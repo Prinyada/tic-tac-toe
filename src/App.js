@@ -9,18 +9,26 @@ import Dialog from "./components/Dialog";
 function App() {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isClick, setIsClick] = useState(false);
-  const [xPlaying, setXplaying] = useState(true);
+  const [xPlaying, setXplaying] = useState(false);
 
   // save to database
   const [size, setSize] = useState(3);
-  let win;
-  let lose;
-  let toe;
-  let result;
+  let winner;
+  let loser;
+  let toetoe;
+  let resultGame;
 
   const [allData, setAllData] = useState([]);
-  const [select, setSelect] = useState();
   const [isOpen, setIsOpen] = useState(false);
+  const { Option } = Select;
+  const [endGame, setEndGame] = useState(false);
+
+  const [winEndGame, setWinEndGame] = useState("");
+
+  const [isWin, setIsWin] = useState("");
+  const [isIndex, setIsIndex] = useState(Number);
+  const [isResult, setIsResult] = useState([]);
+  const [isSize, setIsSize] = useState(Number);
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,13 +47,14 @@ function App() {
   };
 
   const createBoard = () => {
-    setIsClick(true);
+    setEndGame(false);
+    setWinEndGame("");
     setSize(parseInt(size));
-
+    setIsClick(true);
     let resultSize = Math.pow(size, 2);
-
     setBoard(Array(resultSize).fill(null));
   };
+
 
   function convertTo2DArray(oneDArray, rows, columns) {
     const twoDArray = [];
@@ -64,11 +73,7 @@ function App() {
     return twoDArray;
   }
 
-  function convertTo1DArray(twoDArray) {
-    const oneDArray = [].concat(...twoDArray);
-    return oneDArray;
-  }
-
+  // Check Winner
   function isWinningState(updateBoard, symbol) {
     let tempBoard = updateBoard;
     let newUpdateBoard;
@@ -158,18 +163,22 @@ function App() {
 
     if (winX.success === true) {
       const tempStringX = winX.data.join("");
-      result = tempStringX;
-      win = "x";
-      lose = "o";
-      toe = "-";
-      addData(win, lose, toe, result, size);
+      resultGame = tempStringX;
+      winner = "x";
+      loser = "o";
+      toetoe = "-";
+      addData(winner, loser, toetoe, resultGame, size);
+      setEndGame(true);
+      setWinEndGame("x");
     } else if (winO.success === true) {
       const tempStringO = winO.data.join("");
-      result = tempStringO;
-      win = "o";
-      lose = "x";
-      toe = "-";
-      addData(win, lose, toe, result, size);
+      resultGame = tempStringO;
+      winner = "o";
+      loser = "x";
+      toetoe = "-";
+      addData(winner, loser, toetoe, resultGame, size);
+      setEndGame(true);
+      setWinEndGame("o");
     } else if (
       !winX.data.includes("N") &&
       !winO.data.includes("N") &&
@@ -178,48 +187,63 @@ function App() {
       winX.success === false &&
       winO.success === false
     ) {
+      setEndGame(true);
       const tempStringXO = winX.data.join("");
-      result = tempStringXO;
-      win = "-";
-      lose = "-";
-      toe = "toe";
-      addData(win, lose, toe, result, size);
+      resultGame = tempStringXO;
+      winner = "-";
+      loser = "-";
+      toetoe = "toe";
+      addData(winner, loser, toetoe, resultGame, size);
+      setWinEndGame("toe");
     }
   };
 
   // Select Show Data
-
-  const { Option } = Select;
-
-  function selectData(value){
-    setIsOpen(true)
-    console.log(value);
+  function selectData(value) {
+    setIsOpen(true);
+    let newShowData = [];
     allData.map((data, index) => {
-      console.log(index);
-    })
+      if (index === value) {
+        const stringResult = data.result;
+        const stringToArray = stringResult.split("");
+        if (stringToArray.includes("N")) {
+          newShowData = stringToArray.map((n) => (n === "N" ? null : n));
+          setIsWin(data.win);
+          setIsIndex(index + 1);
+          setIsResult(newShowData);
+          setIsSize(data.size);
+        } else {
+          setIsWin(data.win);
+          setIsIndex(index + 1);
+          setIsResult(stringToArray);
+          setIsSize(data.size);
+        }
+      }
+    });
   }
 
-  // API
-  async function addData(win, lose, toe, result, size) {
+  // add data to database
+  async function addData(w, l, t, r, s) {
     await axios.post("http://localhost:8000/data", {
-      win: win,
-      lose: lose,
-      toe: toe,
-      result: result,
-      size: size,
+      win: w,
+      lose: l,
+      toe: t,
+      result: r,
+      size: s,
     });
 
     allData.push({
-      win: win,
-      lose: lose,
-      toe: toe,
-      result: result,
-      size: size,
+      win: w,
+      lose: l,
+      toe: t,
+      result: r,
+      size: s,
     });
     await wait(3000);
     createBoard();
   }
 
+  // get data from database
   async function getData() {
     const data = await axios
       .get("http://localhost:8000/data", { crossdomain: true })
@@ -260,8 +284,8 @@ function App() {
             }}
           >
             {allData.map((data, index) => (
-              <Option key={index} value={index} label={`Round ${index+1}`}>
-                Round {index+1}
+              <Option key={index} value={index} label={`Round ${index + 1}`}>
+                Round {index + 1}
               </Option>
             ))}
           </Select>
@@ -270,13 +294,25 @@ function App() {
       <div className="board-size">
         {size} x {size}
       </div>
-      <Dialog isOpen={isOpen} onClose={(e) => setIsOpen(false)}></Dialog>
+      <Dialog
+        isOpen={isOpen}
+        showIndex={isIndex}
+        showWin={isWin}
+        showResult={isResult}
+        showSize={isSize}
+        onClose={(e) => setIsOpen(false)}
+      ></Dialog>
       <Board
         style={style}
         board={board}
         onClick={handleBoxClick}
         isClick={isClick}
       />
+      {endGame === true && (winEndGame === "x" || winEndGame === "o") ? (
+        <div className="board-text-winner">Winner is {winEndGame}</div>
+      ) : (
+        <div className="board-text-winner">{winEndGame}</div>
+      )}
     </div>
   );
 }

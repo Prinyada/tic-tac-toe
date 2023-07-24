@@ -7,13 +7,20 @@
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 999;
-    background-color: var(--white);
-    padding: 10px 20px 40px;
+    background-color: #ffffff;
+    padding: 10px;
     border-radius: 3px;
     display: flex;
     flex-direction: column;
     box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
-    border: 2px solid #e72214;
+    border: 2px solid #000000;
+    text-align: center;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.dialog-style p {
+    margin: 10px;
 }
 
 .dialog-closeButtonStyle {
@@ -26,35 +33,11 @@
     height: 30px;
     font-weight: bold;
     align-self: flex-end;
-    background-color: var(--white);
-    color: #000000;
+    background-color: #e72214;
+    color: #ffffff;
     font-size: 20px;
     display: flex;
     text-align: center;
     align-items: center;
     justify-content: center;
-}
-
-.dialog-header {
-    display: flex;
-    justify-content: space-between;
-}
-
-.text-dialog-header {
-    text-align: left;
-    font-weight: bold;
-    color: #e72214;
-    text-decoration: underline;
-}
-
-.dialog-content {
-    width: 500px;
-    max-width: 100%;
-    margin: 0 auto;
-}
-
-.text-dialog {
-    text-align: left;
-    font-weight: bold;
-    color: #e72214;
 }
