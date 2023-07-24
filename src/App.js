@@ -2,7 +2,9 @@ import "./App.css";
 import { Board } from "./components/Board";
 import React, { useEffect } from "react";
 import { useState } from "react";
-import axios from 'axios';
+import axios from "axios";
+import { Button, Input, Select } from "antd";
+import Dialog from "./components/Dialog";
 
 function App() {
   const [board, setBoard] = useState(Array(9).fill(null));
@@ -16,15 +18,17 @@ function App() {
   let toe;
   let result;
 
-  let allData = [];
+  const [allData, setAllData] = useState([]);
+  const [select, setSelect] = useState();
+  const [isOpen, setIsOpen] = useState(false);
 
   function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   const style = {
     display: "grid",
-    gridTemplateColumns: `repeat(${size},4rem)`,
+    gridTemplateColumns: `repeat(${size},6rem)`,
     placeItems: "center",
     justifyContent: "center",
   };
@@ -66,7 +70,6 @@ function App() {
   }
 
   function isWinningState(updateBoard, symbol) {
-
     let tempBoard = updateBoard;
     let newUpdateBoard;
     tempBoard = convertTo2DArray(tempBoard, size, size); // เอาไว้เช็คเฉยๆ
@@ -81,11 +84,11 @@ function App() {
         }
       }
       if (rowWin) {
-        if(updateBoard.includes(null)){
-          newUpdateBoard = updateBoard.map( n => n === null ? 'N' : n)
+        if (updateBoard.includes(null)) {
+          newUpdateBoard = updateBoard.map((n) => (n === null ? "N" : n));
         }
         return { success: true, data: newUpdateBoard };
-      } 
+      }
     }
 
     // Check columns
@@ -98,8 +101,8 @@ function App() {
         }
       }
       if (colWin) {
-        if(updateBoard.includes(null)){
-          newUpdateBoard = updateBoard.map( n => n === null ? 'N' : n)
+        if (updateBoard.includes(null)) {
+          newUpdateBoard = updateBoard.map((n) => (n === null ? "N" : n));
         }
         return { success: true, data: newUpdateBoard };
       }
@@ -114,10 +117,10 @@ function App() {
       }
     }
     if (mainDiagonalWin) {
-      if(updateBoard.includes(null)){
-          newUpdateBoard = updateBoard.map( n => n === null ? 'N' : n)
-        }
-        return { success: true, data: newUpdateBoard }
+      if (updateBoard.includes(null)) {
+        newUpdateBoard = updateBoard.map((n) => (n === null ? "N" : n));
+      }
+      return { success: true, data: newUpdateBoard };
     }
 
     // Check anti-diagonal (top-right to bottom-left)
@@ -128,9 +131,9 @@ function App() {
         break;
       }
     }
-    if (antiDiagonalWin){
-      if(updateBoard.includes(null)){
-        newUpdateBoard = updateBoard.map( n => n === null ? 'N' : n)
+    if (antiDiagonalWin) {
+      if (updateBoard.includes(null)) {
+        newUpdateBoard = updateBoard.map((n) => (n === null ? "N" : n));
       }
       return { success: true, data: newUpdateBoard };
     }
@@ -140,38 +143,42 @@ function App() {
 
   const handleBoxClick = (boxIdx) => {
     const updatedBoard = board.map((value, idx) => {
-      if(idx === boxIdx){
+      if (idx === boxIdx) {
         return xPlaying === false ? "X" : "O";
-      }
-      else {
+      } else {
         return value;
       }
     });
-    
+
     setBoard(updatedBoard);
     setXplaying(!xPlaying);
 
-    const winX = isWinningState(updatedBoard,"X");
-    const winO = isWinningState(updatedBoard,"O");
+    const winX = isWinningState(updatedBoard, "X");
+    const winO = isWinningState(updatedBoard, "O");
 
-    if(winX.success === true){
-      const tempStringX = winX.data.join('');
+    if (winX.success === true) {
+      const tempStringX = winX.data.join("");
       result = tempStringX;
       win = "x";
       lose = "o";
       toe = "-";
       addData(win, lose, toe, result, size);
-    }
-    else if(winO.success === true){
-      const tempStringO = winO.data.join('');
+    } else if (winO.success === true) {
+      const tempStringO = winO.data.join("");
       result = tempStringO;
       win = "o";
       lose = "x";
       toe = "-";
       addData(win, lose, toe, result, size);
-    }
-    else if(!winX.data.includes('N') && !winO.data.includes('N') && !winX.data.includes(null) && !winO.data.includes(null) && (winX.success === false) && (winO.success === false)){
-      const tempStringXO = winX.data.join('');
+    } else if (
+      !winX.data.includes("N") &&
+      !winO.data.includes("N") &&
+      !winX.data.includes(null) &&
+      !winO.data.includes(null) &&
+      winX.success === false &&
+      winO.success === false
+    ) {
+      const tempStringXO = winX.data.join("");
       result = tempStringXO;
       win = "-";
       lose = "-";
@@ -180,13 +187,26 @@ function App() {
     }
   };
 
-  async function addData(win, lose, toe, result, size){
-    await axios.post('http://localhost:8000/data', {
+  // Select Show Data
+
+  const { Option } = Select;
+
+  function selectData(value){
+    setIsOpen(true)
+    console.log(value);
+    allData.map((data, index) => {
+      console.log(index);
+    })
+  }
+
+  // API
+  async function addData(win, lose, toe, result, size) {
+    await axios.post("http://localhost:8000/data", {
       win: win,
       lose: lose,
       toe: toe,
       result: result,
-      size: size
+      size: size,
     });
 
     allData.push({
@@ -194,38 +214,63 @@ function App() {
       lose: lose,
       toe: toe,
       result: result,
-      size: size
+      size: size,
     });
     await wait(3000);
     createBoard();
   }
 
-  async function getData(){
-    const data = await axios.get('http://localhost:8000/data', { crossdomain: true })
-    .then((response) => {
-      return response.data.data;
-    })
-    allData.push(...data);
-    console.log("this allData -> ",allData);
+  async function getData() {
+    const data = await axios
+      .get("http://localhost:8000/data", { crossdomain: true })
+      .then((response) => {
+        return response.data.data;
+      });
+    setAllData(data);
   }
 
   useEffect(() => {
     createBoard();
-  },[]); 
-  
+    getData();
+  }, []);
+
   return (
     <div className="App">
-      <div className="board">
-        Size : &nbsp;
-        <input onChange={handleValueChange} />
-        &nbsp;
-        <button onClick={createBoard}>OK</button>
-        &nbsp;
-        <button onClick={getData}>history</button>
+      <div className="header-board">
+        <div className="header-board-content">
+          <span>Size : </span>
+          <Input
+            placeholder="input size"
+            style={{
+              width: 100,
+            }}
+            onChange={handleValueChange}
+          />
+          &nbsp;
+          <Button type="primary" onClick={createBoard}>
+            OK
+          </Button>
+          &nbsp;
+          <Select
+            placeholder="History"
+            style={{ width: 100, marginLeft: 20 }}
+            optionLabelProp="label"
+            onChange={(value) => {
+              selectData(value);
+            }}
+          >
+            {allData.map((data, index) => (
+              <Option key={index} value={index} label={`Round ${index+1}`}>
+                Round {index+1}
+              </Option>
+            ))}
+          </Select>
+        </div>
       </div>
       <div className="board-size">
         {size} x {size}
       </div>
+      <Dialog isOpen={isOpen} onClose={(e) => setIsOpen(false)}></Dialog>
       <Board
         style={style}
         board={board}
